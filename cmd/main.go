@@ -29,6 +29,7 @@ func main() {
 
 		for i := 0; i < len(songs); i++ {
 			song := songs[i]
+			slog.Info(fmt.Sprintf("Processing \"%s\" by \"%s\".", song.Title, song.ArtistNames))
 			res := db.PutSong(song)
 			if res == 0 {
 				scraper.Run(song)

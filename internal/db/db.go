@@ -29,7 +29,7 @@ func newClient() *dynamodb.Client {
 func PutSong(song genius.Song) int {
 	dbClient := newClient()
 	skipDb, _ := strconv.ParseBool(os.Getenv("SKIP_DB"))
-	songsTableName := os.Getenv("SONGS_TABLE_NAME")
+	songsTableName := os.Getenv("AWS_DYNAMODB_SONGS_TABLE_NAME")
 
 	av, _ := attributevalue.MarshalMap(song)
 	ce := "attribute_not_exists(ID)"
@@ -64,7 +64,7 @@ func PutSong(song genius.Song) int {
 func PutLyric(lyric genius.Lyric) {
 	dbClient := newClient()
 	skipDb, _ := strconv.ParseBool(os.Getenv("SKIP_DB"))
-	lyricsTableName := os.Getenv("LYRICS_TABLE_NAME")
+	lyricsTableName := os.Getenv("AWS_DYNAMODB_LYRICS_TABLE_NAME")
 
 	if !skipDb {
 		slog.Info(fmt.Sprintf("Inserting lyric \"%s\"...", lyric.Value))
@@ -84,6 +84,6 @@ func PutLyric(lyric genius.Lyric) {
 			}
 		}
 	} else {
-		slog.Warn(fmt.Sprintf("Skipping lyric insert \"%s\".", lyric.Value))
+		// slog.Warn(fmt.Sprintf("Skipping lyric insert \"%s\".", lyric.Value))
 	}
 }

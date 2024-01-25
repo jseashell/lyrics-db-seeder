@@ -7,9 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"slices"
 	"strconv"
-	"strings"
 )
 
 type SongsResponse struct {
@@ -75,17 +73,16 @@ func RequestPage(artistId, pageNumber int) ([]Song, *int) {
 	var data SongsResponse
 	json.Unmarshal(body, &data)
 
-	songs := removeFeatures(data.Response.Songs)
+	songs := []Song{}
 
-	return songs, data.Response.NextPage
-}
-
-func removeFeatures(songs []Song) []Song {
-	for i := 0; i < len(songs); i++ {
-		artists := songs[i].ArtistNames
-		if strings.Contains(artists, "Ft") || strings.Contains(artists, "ft") || strings.Contains(artists, "&") || strings.Contains(artists, "And") || strings.Contains(artists, "and") {
-			songs = slices.Delete(songs, i, i+1)
+	// Only include songs where Young Thug is the only artist
+	for i := 0; i < len(data.Response.Songs); i++ {
+		song := data.Response.Songs[i]
+		artists := song.ArtistNames
+		if artists == "Young Thug" {
+			songs = append(songs, song)
 		}
 	}
-	return songs
+
+	return songs, data.Response.NextPage
 }
