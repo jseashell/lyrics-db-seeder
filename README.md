@@ -38,7 +38,7 @@ Golang app that seeds AWS DynamoDB with songs and lyrics for a single artist.
 1. Run the app
 
     ```go
-    go run cmd/main.go
+    make run
     ```
 
 ## Project Structure
