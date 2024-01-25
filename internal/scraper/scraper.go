@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"hash/fnv"
 	"regexp"
 	"strings"
 
@@ -51,8 +52,13 @@ func parse(html string, song genius.Song) []genius.Lyric {
 
 			id := uuid.NewString()
 
+			h := fnv.New32a()
+			h.Write([]byte(trimmed))
+			hash := int(h.Sum32())
+
 			lyrics = append(lyrics, genius.Lyric{
 				ID:     id,
+				HValue: hash,
 				SongID: song.ID,
 				Value:  trimmed,
 			})

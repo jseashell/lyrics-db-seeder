@@ -38,6 +38,7 @@ type Lyric struct {
 	ID     string `json:"id"`
 	SongID int    `json:"song_id"`
 	Value  string `json:"value"`
+	HValue int    `json:"h_value"`
 }
 
 func RequestPage(artistId, pageNumber int) ([]Song, *int) {

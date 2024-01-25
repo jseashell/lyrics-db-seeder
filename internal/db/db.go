@@ -70,7 +70,7 @@ func PutLyric(lyric genius.Lyric) {
 		slog.Info(fmt.Sprintf("Inserting lyric \"%s\"...", lyric.Value))
 
 		av, _ := attributevalue.MarshalMap(lyric)
-		ce := "attribute_not_exists(ID)"
+		ce := "attribute_not_exists(HValue)"
 
 		_, err := dbClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
 			Item:                av,
