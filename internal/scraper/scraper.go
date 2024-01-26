@@ -7,11 +7,10 @@ import (
 
 	"github.com/gocolly/colly"
 	"github.com/google/uuid"
-	"github.com/jseashell/genius-lyrics-seed-service/internal/db"
 	"github.com/jseashell/genius-lyrics-seed-service/internal/genius"
 )
 
-func Run(song genius.Song) {
+func Run(song genius.Song, lyricsMap map[int]genius.Lyric) {
 	c := colly.NewCollector()
 
 	c.OnHTML("div[data-lyrics-container=\"true\"]", func(e *colly.HTMLElement) {
@@ -19,7 +18,17 @@ func Run(song genius.Song) {
 		lyrics := parse(html, song)
 
 		for j := 0; j < len(lyrics); j++ {
-			db.PutLyric(lyrics[j])
+			lyric := lyrics[j]
+
+			h := fnv.New32a()
+			h.Write([]byte(lyric.Value))
+			hash := int(h.Sum32())
+
+			// lyrics with the same hash are not duplicated
+			_, ok := lyricsMap[hash]
+			if !ok {
+				lyricsMap[hash] = lyric
+			}
 		}
 	})
 
@@ -49,16 +58,14 @@ func parse(html string, song genius.Song) []genius.Lyric {
 
 		if line != "" && len(line) > 20 && !strings.Contains(line, "[Intro") && !strings.Contains(line, "[Verse") && !strings.Contains(line, "[Chorus") && !strings.Contains(line, "[Bridge") && !strings.Contains(line, "[Outro") {
 			trimmed := strings.Trim(line, " ")
+			trimmed = strings.TrimPrefix(trimmed, "[")
+			trimmed = strings.TrimSuffix(trimmed, "]")
+			trimmed = strings.ReplaceAll(trimmed, "’", "'")
 
 			id := uuid.NewString()
 
-			h := fnv.New32a()
-			h.Write([]byte(trimmed))
-			hash := int(h.Sum32())
-
 			lyrics = append(lyrics, genius.Lyric{
 				ID:     id,
-				HValue: hash,
 				SongID: song.ID,
 				Value:  trimmed,
 			})
