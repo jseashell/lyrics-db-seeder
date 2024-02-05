@@ -32,46 +32,19 @@ func PutSong(song genius.Song) {
 	songsTableName := os.Getenv("AWS_DYNAMODB_SONGS_TABLE_NAME")
 
 	av, _ := attributevalue.MarshalMap(song)
-	ce := "attribute_not_exists(ID)"
 
 	if !skipDb {
 		_, err := dbClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
-			Item:                av,
-			TableName:           aws.String(songsTableName),
-			ConditionExpression: &ce,
+			Item:      av,
+			TableName: aws.String(songsTableName),
 		})
 
 		if err != nil {
 			if t := new(types.ConditionalCheckFailedException); !errors.As(err, &t) {
-				slog.Error("Failed song.", song.Title, err.Error())
+				slog.Error(fmt.Sprintf("Failed song %s", song.Title))
 			}
 		}
 	} else {
 		slog.Warn(fmt.Sprintf("Skipping song insert \"%s\".", song.Title))
-	}
-}
-
-func PutLyric(lyric genius.Lyric) {
-	dbClient := newClient()
-	skipDb, _ := strconv.ParseBool(os.Getenv("SKIP_DB"))
-	lyricsTableName := os.Getenv("AWS_DYNAMODB_LYRICS_TABLE_NAME")
-
-	if !skipDb {
-		av, _ := attributevalue.MarshalMap(lyric)
-		ce := "attribute_not_exists(ID)"
-
-		_, err := dbClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
-			Item:                av,
-			TableName:           aws.String(lyricsTableName),
-			ConditionExpression: &ce,
-		})
-
-		if err != nil {
-			if t := new(types.ConditionalCheckFailedException); !errors.As(err, &t) {
-				slog.Error("Failed lyric.", "error", err.Error())
-			}
-		}
-	} else {
-		slog.Warn(fmt.Sprintf("Skipping lyric insert \"%s\".", lyric.Value))
 	}
 }

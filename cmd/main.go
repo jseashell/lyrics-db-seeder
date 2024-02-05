@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/jseashell/genius-lyrics-seed-service/internal/db"
 	"github.com/jseashell/genius-lyrics-seed-service/internal/genius"
 	"github.com/jseashell/genius-lyrics-seed-service/internal/scraper"
-	"golang.org/x/exp/maps"
 )
 
 func main() {
@@ -23,23 +23,23 @@ func main() {
 	}
 
 	artistId, _ := strconv.Atoi(os.Getenv("GENIUS_ARTIST_ID"))
+	artistName := os.Getenv("GENIUS_ARTIST_NAME")
 	pageNumber := 0
-
-	lyrics := make(map[int]genius.Lyric)
-
-	songs := []genius.Song{}
+	songs := make(map[int]genius.Song)
 
 	for {
-		nextSongs, nextPage := genius.RequestPage(artistId, pageNumber)
-		songs = append(songs, nextSongs...)
+		nextSongs, nextPage := genius.RequestPage(artistId, artistName, pageNumber)
+		for _, song := range nextSongs {
+			lyrics := scraper.Run(song)
 
-		for i := 0; i < len(nextSongs); i++ {
-			nextSong := nextSongs[i]
-			slog.Info(fmt.Sprintf("%d lyrics accumulated. Scraping \"%s\" next.", len(maps.Values(lyrics)), nextSong.Title))
-			scraper.Run(nextSong, lyrics)
+			song.Lyrics = append(song.Lyrics, *lyrics...)
+			song.ID = uuid.NewString()
+			songs[song.SongID] = song
+
+			slog.Info(fmt.Sprintf("Found %d lyrics for \"%s\".", len(song.Lyrics), song.Title))
 		}
 
-		if nextPage == nil {
+		if nextPage == nil { // || pageNumber > 2 {
 			break
 		} else {
 			pageNumber = *nextPage
@@ -47,21 +47,13 @@ func main() {
 	}
 
 	slog.Info(fmt.Sprintf("Inserting %d songs", len(songs)))
-	for i := 0; i < len(songs); i++ {
-		db.PutSong(songs[i])
-		if i%100 == 0 {
+	for i, song := range songs {
+		db.PutSong(song)
+		if i%50 == 0 {
 			fmt.Print(".")
 		}
 	}
-
-	lyricsArray := maps.Values(lyrics)
-	slog.Info(fmt.Sprintf("Inserting %d lyrics", len(songs)))
-	for i := 0; i < len(lyricsArray); i++ {
-		db.PutLyric(lyricsArray[i])
-		if i%100 == 0 {
-			fmt.Print(".")
-		}
-	}
+	fmt.Print("\n")
 
 	t := time.Now()
 	elapsed := t.Sub(start)

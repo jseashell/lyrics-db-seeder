@@ -21,27 +21,22 @@ type SongsResponse struct {
 }
 
 type Song struct {
-	ArtistNames              string `json:"artist_names"`
-	FullTitle                string `json:"full_title"`
-	HeaderImageThumbnailURL  string `json:"header_image_thumbnail_url"`
-	HeaderImageURL           string `json:"header_image_url"`
-	ID                       int    `json:"id"`
-	Path                     string `json:"path"`
-	ReleaseDateForDisplay    string `json:"release_date_for_display"`
-	SongArtImageThumbnailURL string `json:"song_art_image_thumbnail_url"`
-	SongArtImageURL          string `json:"song_art_image_url"`
-	Title                    string `json:"title"`
-	URL                      string `json:"url"`
+	ArtistNames              string   `json:"artist_names"`
+	FullTitle                string   `json:"full_title"`
+	HeaderImageThumbnailURL  string   `json:"header_image_thumbnail_url"`
+	HeaderImageURL           string   `json:"header_image_url"`
+	SongID                   int      `json:"id"`   // "id" is from genius.com
+	ID                       string   `json:"uuid"` // UUID is a reserved word in DynamoDB
+	Path                     string   `json:"path"`
+	ReleaseDateForDisplay    string   `json:"release_date_for_display"`
+	SongArtImageThumbnailURL string   `json:"song_art_image_thumbnail_url"`
+	SongArtImageURL          string   `json:"song_art_image_url"`
+	Title                    string   `json:"title"`
+	URL                      string   `json:"url"`
+	Lyrics                   []string `json:"lyrics"` // only present after scraping, does not come from genius.com
 }
 
-type Lyric struct {
-	ID     string `json:"id"`
-	SongID int    `json:"song_id"`
-	Value  string `json:"value"`
-	HValue int    `json:"h_value"`
-}
-
-func RequestPage(artistId, pageNumber int) ([]Song, *int) {
+func RequestPage(artistId int, artistName string, pageNumber int) ([]Song, *int) {
 	path := fmt.Sprintf("/artists/%s/songs", strconv.Itoa(artistId))
 	url := fmt.Sprintf("https://api.genius.com%s", path)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -77,10 +72,9 @@ func RequestPage(artistId, pageNumber int) ([]Song, *int) {
 	songs := []Song{}
 
 	// Only include songs where Young Thug is the only artist
-	for i := 0; i < len(data.Response.Songs); i++ {
-		song := data.Response.Songs[i]
+	for _, song := range data.Response.Songs {
 		artists := song.ArtistNames
-		if artists == "Young Thug" {
+		if artists == artistName {
 			songs = append(songs, song)
 		}
 	}
