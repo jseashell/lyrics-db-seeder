@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,15 +22,23 @@ func main() {
 		panic(err)
 	}
 
-	artistId, _ := strconv.Atoi(os.Getenv("GENIUS_ARTIST_ID"))
 	artistName := os.Getenv("GENIUS_ARTIST_NAME")
+	artistAlbums := strings.Split(os.Getenv("GENIUS_ARTIST_ALBUMS"), ",")
+
+	slog.Info(fmt.Sprintf("======== AWS Genius Lyrics ========\nArtist:\t\t%s\nAlbums (%d):\t%s", artistName, len(artistAlbums), strings.Join(artistAlbums, ", \n\t\t")))
+
 	pageNumber := 0
 	songs := make(map[int]genius.Song)
 
+	artistId, err := genius.SearchArtistId(artistName)
+	if err != nil {
+		panic(err)
+	}
+
 	for {
-		nextSongs, nextPage := genius.RequestPage(artistId, artistName, pageNumber)
+		nextSongs, nextPage := genius.RequestPage(artistId, artistAlbums, pageNumber)
 		for _, song := range nextSongs {
-			lyrics := scraper.Run(song)
+			lyrics := scraper.Run(artistName, song)
 
 			song.Lyrics = append(song.Lyrics, *lyrics...)
 			song.ID = uuid.NewString()
