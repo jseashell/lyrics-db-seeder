@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"slices"
 	"strconv"
 )
 
@@ -182,20 +181,10 @@ func RequestPage(artistId int, artistAlbums []string, pageNumber int) ([]Song, *
 		json.Unmarshal(body, &data)
 		song := data.Response.Song
 
-		if song.Album == nil {
-			// skip singles
-			slog.Warn(fmt.Sprintf("No album for song \"%s\"", song.Title))
-			continue
-		}
-
-		albumName := (*song.Album).Name
-		if slices.Contains(artistAlbums, albumName) {
-			slog.Info(fmt.Sprintf("Found song \"%s\" from album \"%s\"", song.Title, albumName))
+		// skip songs without playable apple music provider
+		if song.Media != nil && (*song.Media).Provider == "apple" {
 			songs = append(songs, song)
-		} else {
-			slog.Warn(fmt.Sprintf("Invalid album for song \"%s\" (%s)", song.Title, albumName))
 		}
-
 	}
 
 	return songs, data.Response.NextPage
