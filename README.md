@@ -30,10 +30,9 @@ Golang app that seeds AWS DynamoDB with songs and lyrics for a single artist.
     ```
 
     - `GENIUS_ACCESS_TOKEN`: Visit [https://docs.genius.com/](https://docs.genius.com/).
-    - `GENIUS_ARTIST_ID`: Search for your artist with the [API client](https://docs.genius.com/#search-h2).
+    - `GENIUS_ARTIST_NAME`: Name of the artist to collect.
     - `AWS_DYNAMODB_SONGS_TABLE_NAME`: Name of the table in which to save songs.
-    - `AWS_DYNAMODB_LYRICS_TABLE_NAME`: Name of the table in which to save lyrics.
-    - `SKIP_DB`: Skips database operations. Outputs song names and lyrics to stdout. Typically used for debugging and verification before incurring AWS costs.
+    - `SKIP_DB`: Skips database operations. Typically used for debugging and verification before incurring AWS costs.
 
 1. Run the app
 

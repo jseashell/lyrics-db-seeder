@@ -1,7 +1,6 @@
 package scraper
 
 import (
-	"fmt"
 	"log/slog"
 	"strings"
 
@@ -31,7 +30,6 @@ func Parse(artistName string, song genius.Song, html string) []string {
 
 	p := bluemonday.NewPolicy()
 	html = p.Sanitize(html)
-
 	lines := strings.Split(html, "\n")
 
 	lyrics := []string{}
@@ -42,7 +40,7 @@ func Parse(artistName string, song genius.Song, html string) []string {
 			continue
 		}
 
-		// Skip featured artist verses
+		// Skip verses by other artists
 		if isMetaLine(line) && strings.Contains(line, ":") {
 			featurePart = !strings.Contains(line, artistName)
 			continue
@@ -58,13 +56,13 @@ func Parse(artistName string, song genius.Song, html string) []string {
 			trimmed = strings.ReplaceAll(trimmed, "&#39;", "'")
 			trimmed = strings.ReplaceAll(trimmed, "&#34;", "\"")
 			lyrics = append(lyrics, trimmed)
-			slog.Info(fmt.Sprintf("Scraped from %s (%s)\n%s", song.Title, song.Album.Name, trimmed))
 		}
 	}
 
+	slog.Info("Scrap event", "song", song.Title, "lyrics", lyrics)
 	return lyrics
 }
 
 func isMetaLine(line string) bool {
-	return strings.Contains(line, "[Intro") || strings.Contains(line, "[Verse") || strings.Contains(line, "[Chorus") || strings.Contains(line, "[Hook") || strings.Contains(line, "[Bridge") || strings.Contains(line, "[Outro")
+	return strings.Contains(line, "[Intro") || strings.Contains(line, "[Verse") || strings.Contains(line, "[Pre-Chorus") || strings.Contains(line, "[Chorus") || strings.Contains(line, "[Hook") || strings.Contains(line, "[Bridge") || strings.Contains(line, "[Outro")
 }

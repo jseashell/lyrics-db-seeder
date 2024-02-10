@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
@@ -41,10 +40,8 @@ func PutSong(song genius.Song) {
 
 		if err != nil {
 			if t := new(types.ConditionalCheckFailedException); !errors.As(err, &t) {
-				slog.Error(fmt.Sprintf("Failed song %s", song.Title))
+				slog.Error("Insert failed", "song", song)
 			}
 		}
-	} else {
-		slog.Warn(fmt.Sprintf("Skipping song insert \"%s\".", song.Title))
 	}
 }

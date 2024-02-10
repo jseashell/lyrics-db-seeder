@@ -7,7 +7,7 @@ import (
 	"github.com/jseashell/genius-lyrics-seed-service/internal/genius"
 )
 
-func TestParseAnchorLink(t *testing.T) {
+func Test_Parse_AnchorLink(t *testing.T) {
 	artistName := "foo"
 	song := genius.Song{
 		Album: &genius.Album{
@@ -22,7 +22,7 @@ func TestParseAnchorLink(t *testing.T) {
 	}
 }
 
-func TestParseLineBreak(t *testing.T) {
+func Test_Parse_LineBreak(t *testing.T) {
 	artistName := "foo"
 	song := genius.Song{
 		Album: &genius.Album{
@@ -38,7 +38,7 @@ func TestParseLineBreak(t *testing.T) {
 	}
 }
 
-func TestSkipFeaturePart(t *testing.T) {
+func Test_Parse_SkipFeaturePart(t *testing.T) {
 	artistName := "foo"
 	featureArtist := "bar"
 	song := genius.Song{

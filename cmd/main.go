@@ -21,40 +21,48 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	artistName := os.Getenv("GENIUS_PRIMARY_ARTIST")
+	affiliations := strings.Split(os.Getenv("GENIUS_AFFILIATIONS"), ",")
 
-	artistName := os.Getenv("GENIUS_ARTIST_NAME")
-	artistAlbums := strings.Split(os.Getenv("GENIUS_ARTIST_ALBUMS"), ",")
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
-	slog.Info(fmt.Sprintf("======== AWS Genius Lyrics ========\nArtist:\t\t%s\nAlbums (%d):\t%s", artistName, len(artistAlbums), strings.Join(artistAlbums, ", \n\t\t")))
-
-	pageNumber := 0
-	songs := make(map[int]genius.Song)
-
-	artistId, err := genius.SearchArtistId(artistName)
+	artistIds, err := genius.SearchArtistId(artistName, affiliations)
 	if err != nil {
 		panic(err)
 	}
 
+	for _, id := range artistIds {
+		processArtistId(artistName, id)
+	}
+
+	t := time.Now()
+	elapsed := t.Sub(start)
+	slog.Info("Seeded", slog.Float64("seconds", elapsed.Seconds()))
+}
+
+func processArtistId(artistName string, artistId int) {
+	pageNumber := 0
+	songs := make(map[int]genius.Song)
+
 	for {
-		nextSongs, nextPage := genius.RequestPage(artistId, artistAlbums, pageNumber)
+		nextSongs, nextPage := genius.RequestPage(artistId, pageNumber)
 		for _, song := range nextSongs {
 			lyrics := scraper.Run(artistName, song)
 
 			song.Lyrics = append(song.Lyrics, *lyrics...)
 			song.ID = uuid.NewString()
 			songs[song.SongID] = song
-
-			slog.Info(fmt.Sprintf("Found %d lyrics for \"%s\".", len(song.Lyrics), song.Title))
 		}
 
-		if nextPage == nil { // || pageNumber > 2 {
+		if nextPage == nil {
 			break
 		} else {
 			pageNumber = *nextPage
 		}
 	}
 
-	slog.Info(fmt.Sprintf("Inserting %d songs", len(songs)))
+	slog.Info("Inserting songs", slog.Int("length", len(songs)))
 	for i, song := range songs {
 		db.PutSong(song)
 		if i%50 == 0 {
@@ -62,8 +70,4 @@ func main() {
 		}
 	}
 	fmt.Print("\n")
-
-	t := time.Now()
-	elapsed := t.Sub(start)
-	slog.Info(fmt.Sprintf("Seeded in %f seconds", elapsed.Seconds()))
 }

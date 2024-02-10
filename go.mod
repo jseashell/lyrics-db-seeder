@@ -11,6 +11,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/microcosm-cc/bluemonday v1.0.26
+	golang.org/x/exp v0.0.0-20240205201215-2c58cdc269a3
 )
 
 require (
