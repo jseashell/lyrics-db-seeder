@@ -30,7 +30,8 @@ Golang app that seeds AWS DynamoDB with songs and lyrics for a single artist.
     ```
 
     - `GENIUS_ACCESS_TOKEN`: Visit [https://docs.genius.com/](https://docs.genius.com/).
-    - `GENIUS_ARTIST_NAME`: Name of the artist to collect.
+    - `GENIUS_PRIMARY_ARTIST`: Name of the artist to collect.
+    - `GENIUS_AFFILIATIONS`: List of affiliations to include in collections.
     - `AWS_DYNAMODB_SONGS_TABLE_NAME`: Name of the table in which to save songs.
     - `SKIP_DB`: Skips database operations. Typically used for debugging and verification before incurring AWS costs.
 
@@ -46,6 +47,7 @@ Golang app that seeds AWS DynamoDB with songs and lyrics for a single artist.
 .
 ├── cmd
 │   └── main.go             # entry point
+├── docs                    # repo documentation
 ├── internal                # internal packages
 │   ├── db                  # dynamodb operations
 │   ├── genius              # genius.com integration
@@ -55,6 +57,7 @@ Golang app that seeds AWS DynamoDB with songs and lyrics for a single artist.
 ├── go.mod                  # module dependencies
 ├── go.sum                  # dependency checksums
 ├── LICENSE
+├── Makefile
 └── README.md
 ```
 
