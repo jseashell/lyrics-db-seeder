@@ -21,13 +21,17 @@ type SearchResponse struct {
 	Response struct {
 		Hits []struct {
 			Result struct {
-				PrimaryArtist struct {
-					ID   int    `json:"id"`
-					Name string `json:"name"`
-				} `json:"primary_artist"`
+				ArtistNames     string                 `json:"artist_names"`
+				PrimaryArtist   SearchResponseArtist   `json:"primary_artist"`
+				FeaturedArtists []SearchResponseArtist `json:"featured_artists"`
 			} `json:"result"`
 		} `json:"hits"`
 	} `json:"response"`
+}
+
+type SearchResponseArtist struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 type BulkSongsResponse struct {
@@ -110,12 +114,20 @@ func SearchArtistId(artistName string, affiliations []string) ([]int, error) {
 }
 
 func searchWithAffiliation(artistName, affiliation string) map[int]interface{} {
+	affiliationMap := searchPrimaryArtist(affiliation)
 	artistAndAffiliationMap := searchPrimaryArtist(fmt.Sprintf("%s & %s", artistName, affiliation))
 	affiliationAndArtistMap := searchPrimaryArtist(fmt.Sprintf("%s & %s", affiliation, artistName))
-	affiliationMap := make(map[int]interface{})
-	maps.Copy(affiliationMap, artistAndAffiliationMap)
-	maps.Copy(affiliationMap, affiliationAndArtistMap)
-	return affiliationMap
+	ftMap := searchPrimaryArtist(fmt.Sprintf("%s (Ft. %s)", affiliation, artistName))
+	featMap := searchPrimaryArtist(fmt.Sprintf("%s (feat. %s)", affiliation, artistName))
+
+	ret := make(map[int]interface{})
+	maps.Copy(ret, affiliationMap)
+	maps.Copy(ret, artistAndAffiliationMap)
+	maps.Copy(ret, affiliationAndArtistMap)
+	maps.Copy(ret, ftMap)
+	maps.Copy(ret, featMap)
+
+	return ret
 }
 
 func searchPrimaryArtist(artistName string) map[int]interface{} {
@@ -149,14 +161,28 @@ func searchPrimaryArtist(artistName string) map[int]interface{} {
 	artistIdMap := make(map[int]interface{})
 
 	for _, hit := range data.Response.Hits {
-		if hitName := hit.Result.PrimaryArtist.Name; strings.Contains(hitName, artistName) {
+		isInArtistNames := strings.Contains(hit.Result.ArtistNames, artistName)
+		isPrimaryArtist := strings.Contains(hit.Result.PrimaryArtist.Name, artistName)
+		isFeaturedArtist := isFeaturedArtist(hit.Result.FeaturedArtists, artistName)
+
+		if isInArtistNames || isPrimaryArtist || isFeaturedArtist {
 			artistId := hit.Result.PrimaryArtist.ID
-			slog.Info("Search result", "match", hitName, slog.Int("artistId", artistId))
+			slog.Info("Search result", "match", hit.Result.ArtistNames, slog.Int("artistId", artistId))
 			artistIdMap[artistId] = hit.Result.PrimaryArtist.Name
 		}
 	}
 
 	return artistIdMap
+}
+
+func isFeaturedArtist(featuredArtists []SearchResponseArtist, artistName string) bool {
+	for _, featuredArtist := range featuredArtists {
+		if featuredArtist.Name == artistName {
+			return true
+		}
+	}
+
+	return false
 }
 
 func RequestPage(artistId int, pageNumber int) ([]Song, *int) {
