@@ -2,16 +2,12 @@ package genius
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
-
-	"golang.org/x/exp/maps"
 )
 
 type SearchResponse struct {
@@ -19,19 +15,16 @@ type SearchResponse struct {
 		Status int `json:"status"`
 	} `json:"meta"`
 	Response struct {
-		Hits []struct {
-			Result struct {
-				ArtistNames     string                 `json:"artist_names"`
-				PrimaryArtist   SearchResponseArtist   `json:"primary_artist"`
-				FeaturedArtists []SearchResponseArtist `json:"featured_artists"`
-			} `json:"result"`
-		} `json:"hits"`
+		Hits []SearchHit `json:"hits"`
 	} `json:"response"`
 }
 
-type SearchResponseArtist struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+type SearchHit struct {
+	Result struct {
+		ArtistNames     string   `json:"artist_names"`
+		PrimaryArtist   Artist   `json:"primary_artist"`
+		FeaturedArtists []Artist `json:"featured_artists"`
+	} `json:"result"`
 }
 
 type BulkSongsResponse struct {
@@ -45,19 +38,20 @@ type BulkSongsResponse struct {
 }
 
 type BulkSong struct {
-	ArtistNames              string  `json:"artist_names"`
-	AppleMusicPlayerUrl      *string `json:"apple_music_player_url,omitempty"`
-	FullTitle                string  `json:"full_title"`
-	HeaderImageThumbnailURL  string  `json:"header_image_thumbnail_url"`
-	HeaderImageURL           string  `json:"header_image_url"`
-	SongID                   int     `json:"id"`   // "id" is from genius.com
-	ID                       string  `json:"uuid"` // UUID is a reserved word in DynamoDB
-	Path                     string  `json:"path"`
-	ReleaseDateForDisplay    string  `json:"release_date_for_display"`
-	SongArtImageThumbnailURL string  `json:"song_art_image_thumbnail_url"`
-	SongArtImageURL          string  `json:"song_art_image_url"`
-	Title                    string  `json:"title"`
-	URL                      string  `json:"url"`
+	ArtistNames              string   `json:"artist_names"`
+	AppleMusicPlayerUrl      *string  `json:"apple_music_player_url,omitempty"`
+	FullTitle                string   `json:"full_title"`
+	HeaderImageThumbnailURL  string   `json:"header_image_thumbnail_url"`
+	HeaderImageURL           string   `json:"header_image_url"`
+	ID                       int      `json:"id"`
+	Path                     string   `json:"path"`
+	ReleaseDateForDisplay    string   `json:"release_date_for_display"`
+	SongArtImageThumbnailURL string   `json:"song_art_image_thumbnail_url"`
+	SongArtImageURL          string   `json:"song_art_image_url"`
+	Title                    string   `json:"title"`
+	URL                      string   `json:"url"`
+	PrimaryArtist            Artist   `json:"primary_artist"`
+	FeaturedArtists          []Artist `json:"featured_artists"`
 }
 
 type SongResponse struct {
@@ -71,9 +65,17 @@ type SongResponse struct {
 
 type Song struct {
 	BulkSong
-	Album  *Album   `json:"album"`
-	Media  *Media   `json:"media"`
-	Lyrics []string `json:"lyrics"` // only present after scraping, does not come from genius.com
+	Album *Album `json:"album"`
+	Media *Media `json:"media"`
+}
+
+type Artist struct {
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	ApiPath        string `json:"api_path"`
+	HeaderImageUrl string `json:"header_image_url"`
+	ImageUrl       string `json:"image_url"`
+	URL            string `json:"url"`
 }
 
 type Album struct {
@@ -93,44 +95,7 @@ type Media struct {
 	URL      string `json:"url"`
 }
 
-func SearchArtistId(artistName string, affiliations []string) ([]int, error) {
-	artistMap := make(map[int]interface{})
-
-	primaryArtistMap := searchPrimaryArtist(artistName)
-	maps.Copy(artistMap, primaryArtistMap)
-
-	for _, affiliation := range affiliations {
-		affiliationMap := searchWithAffiliation(artistName, affiliation)
-		maps.Copy(artistMap, affiliationMap)
-	}
-
-	artistIds := maps.Keys(artistMap)
-	if len(artistIds) != 0 {
-		slog.Info("Unique artists", "artists", artistMap)
-		return artistIds, nil
-	} else {
-		return artistIds, errors.New("No search results.")
-	}
-}
-
-func searchWithAffiliation(artistName, affiliation string) map[int]interface{} {
-	affiliationMap := searchPrimaryArtist(affiliation)
-	artistAndAffiliationMap := searchPrimaryArtist(fmt.Sprintf("%s & %s", artistName, affiliation))
-	affiliationAndArtistMap := searchPrimaryArtist(fmt.Sprintf("%s & %s", affiliation, artistName))
-	ftMap := searchPrimaryArtist(fmt.Sprintf("%s (Ft. %s)", affiliation, artistName))
-	featMap := searchPrimaryArtist(fmt.Sprintf("%s (feat. %s)", affiliation, artistName))
-
-	ret := make(map[int]interface{})
-	maps.Copy(ret, affiliationMap)
-	maps.Copy(ret, artistAndAffiliationMap)
-	maps.Copy(ret, affiliationAndArtistMap)
-	maps.Copy(ret, ftMap)
-	maps.Copy(ret, featMap)
-
-	return ret
-}
-
-func searchPrimaryArtist(artistName string) map[int]interface{} {
+func Search(searchTerm string) SearchResponse {
 	url := "https://api.genius.com/search"
 	req, _ := http.NewRequest("GET", url, nil)
 
@@ -138,7 +103,7 @@ func searchPrimaryArtist(artistName string) map[int]interface{} {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 
 	query := req.URL.Query()
-	query.Add("q", artistName)
+	query.Add("q", searchTerm)
 	req.URL.RawQuery = query.Encode()
 
 	client := &http.Client{}
@@ -156,36 +121,10 @@ func searchPrimaryArtist(artistName string) map[int]interface{} {
 
 	var data SearchResponse
 	json.Unmarshal(body, &data)
-
-	slog.Info(fmt.Sprintf("Searching for \"%s\"...", artistName))
-	artistIdMap := make(map[int]interface{})
-
-	for _, hit := range data.Response.Hits {
-		isInArtistNames := strings.Contains(hit.Result.ArtistNames, artistName)
-		isPrimaryArtist := strings.Contains(hit.Result.PrimaryArtist.Name, artistName)
-		isFeaturedArtist := isFeaturedArtist(hit.Result.FeaturedArtists, artistName)
-
-		if isInArtistNames || isPrimaryArtist || isFeaturedArtist {
-			artistId := hit.Result.PrimaryArtist.ID
-			slog.Info("Search result", "match", hit.Result.ArtistNames, slog.Int("artistId", artistId))
-			artistIdMap[artistId] = hit.Result.PrimaryArtist.Name
-		}
-	}
-
-	return artistIdMap
+	return data
 }
 
-func isFeaturedArtist(featuredArtists []SearchResponseArtist, artistName string) bool {
-	for _, featuredArtist := range featuredArtists {
-		if featuredArtist.Name == artistName {
-			return true
-		}
-	}
-
-	return false
-}
-
-func RequestPage(artistId int, pageNumber int) ([]Song, *int) {
+func Songs(artistId int, pageNumber int) ([]Song, *int) {
 	path := fmt.Sprintf("/artists/%s/songs", strconv.Itoa(artistId))
 	url := fmt.Sprintf("https://api.genius.com%s", path)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -220,32 +159,38 @@ func RequestPage(artistId int, pageNumber int) ([]Song, *int) {
 	songs := []Song{}
 
 	for _, song := range data.Response.Songs {
-		path = fmt.Sprintf("/songs/%d", song.SongID)
-		url := fmt.Sprintf("https://api.genius.com%s", path)
-		req, _ = http.NewRequest("GET", url, nil)
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-		slog.Info("Request", "url", req.URL.String())
-
-		res, err := client.Do(req)
-		if err != nil {
-			slog.Error("Request failed.", "url", req.URL.String(), "error", err)
-		}
-
-		defer res.Body.Close()
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			slog.Error("Failed to read buffer.", "url", req.URL.String(), "error", err)
-		}
-
-		var data SongResponse
-		json.Unmarshal(body, &data)
-		song := data.Response.Song
-
-		// skip songs without playable apple music provider
+		song := SongById(song.ID)
 		if song.AppleMusicPlayerUrl != nil {
 			songs = append(songs, song)
 		}
 	}
 
 	return songs, data.Response.NextPage
+}
+
+func SongById(id int) Song {
+	path := fmt.Sprintf("/songs/%d", id)
+	url := fmt.Sprintf("https://api.genius.com%s", path)
+	req, _ := http.NewRequest("GET", url, nil)
+
+	accessToken := os.Getenv("GENIUS_ACCESS_TOKEN")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	client := &http.Client{}
+	slog.Info("Request", "url", req.URL.String())
+	res, err := client.Do(req)
+	if err != nil {
+		slog.Error("Request failed.", "url", req.URL.String(), "error", err)
+	}
+
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		slog.Error("Failed to read buffer.", "url", req.URL.String(), "error", err)
+	}
+
+	var data SongResponse
+	json.Unmarshal(body, &data)
+
+	return data.Response.Song
 }

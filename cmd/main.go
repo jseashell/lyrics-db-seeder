@@ -12,6 +12,7 @@ import (
 	"github.com/jseashell/genius-lyrics-seed-service/internal/db"
 	"github.com/jseashell/genius-lyrics-seed-service/internal/genius"
 	"github.com/jseashell/genius-lyrics-seed-service/internal/scraper"
+	"github.com/jseashell/genius-lyrics-seed-service/internal/search"
 )
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	artistIds, err := genius.SearchArtistId(artistName, affiliations)
+	artistIds, err := search.Query(artistName, affiliations)
 	if err != nil {
 		panic(err)
 	}
@@ -43,16 +44,20 @@ func main() {
 
 func processArtistId(artistName string, artistId int) {
 	pageNumber := 0
-	songs := make(map[int]genius.Song)
+	songs := make(map[int]scraper.ScrapedSong)
 
 	for {
-		nextSongs, nextPage := genius.RequestPage(artistId, pageNumber)
+		nextSongs, nextPage := genius.Songs(artistId, pageNumber)
 		for _, song := range nextSongs {
 			lyrics := scraper.Run(artistName, song)
 
-			song.Lyrics = append(song.Lyrics, *lyrics...)
-			song.ID = uuid.NewString()
-			songs[song.SongID] = song
+			scrapedSong := scraper.ScrapedSong{
+				Song:   song,
+				ID:     uuid.NewString(), // uuid is for fetching random song from AWS DynamoDB
+				Lyrics: *lyrics,
+			}
+
+			songs[scrapedSong.Song.ID] = scrapedSong
 		}
 
 		if nextPage == nil {

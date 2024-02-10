@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/jseashell/genius-lyrics-seed-service/internal/genius"
+	"github.com/jseashell/genius-lyrics-seed-service/internal/scraper"
 )
 
 func newClient() *dynamodb.Client {
@@ -25,7 +25,7 @@ func newClient() *dynamodb.Client {
 	return dynamodb.NewFromConfig(cfg)
 }
 
-func PutSong(song genius.Song) {
+func PutSong(song scraper.ScrapedSong) {
 	dbClient := newClient()
 	skipDb, _ := strconv.ParseBool(os.Getenv("SKIP_DB"))
 	songsTableName := os.Getenv("AWS_DYNAMODB_SONGS_TABLE_NAME")

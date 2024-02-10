@@ -9,6 +9,12 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
+type ScrapedSong struct {
+	Song   genius.Song `json:"song"`
+	ID     string      `json:"uuid"` // UUID is a reserved word in DynamoDB
+	Lyrics []string    `json:"lyrics"`
+}
+
 func Run(artistName string, song genius.Song) *[]string {
 	lyrics := &[]string{}
 	selector := "div[data-lyrics-container=\"true\"]"
@@ -59,7 +65,7 @@ func Parse(artistName string, song genius.Song, html string) []string {
 		}
 	}
 
-	slog.Info("Scrap event", "song", song.Title, "lyrics", lyrics)
+	slog.Info("Scrape event", "song", song, "lyrics", lyrics)
 	return lyrics
 }
 
