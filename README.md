@@ -31,7 +31,7 @@ Golang app that seeds AWS DynamoDB with songs and lyrics for a single artist.
 
     - `GENIUS_ACCESS_TOKEN`: Visit [https://docs.genius.com/](https://docs.genius.com/).
     - `GENIUS_PRIMARY_ARTIST`: Name of the artist to collect.
-    - `GENIUS_AFFILIATIONS`: List of affiliations to include in collections.
+    - `GENIUS_AFFILIATIONS`: List of affiliations to include in collections. Affiliations help the search engine, but searching will yield both explicit and implicit affiliations
     - `AWS_DYNAMODB_SONGS_TABLE_NAME`: Name of the table in which to save songs.
     - `SKIP_DB`: Skips database operations. Typically used for debugging and verification before incurring AWS costs.
 
