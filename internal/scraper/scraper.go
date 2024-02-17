@@ -1,3 +1,8 @@
+// Copyright 2024 John Schellinger.
+// Use of this file is governed by the MIT license that can
+// be found in the LICENSE.txt file in the project root.
+
+// Package `scraper` leverages Gocolly and Bluemonday to crawl Genius.com pages.
 package scraper
 
 import (
@@ -10,12 +15,12 @@ import (
 )
 
 type ScrapedSong struct {
-	Song   genius.Song `json:"song"`
-	ID     string      `json:"uuid"` // UUID is a reserved word in DynamoDB
-	Lyrics []string    `json:"lyrics"`
+	Song   genius.SongWithExtras `json:"song"`
+	ID     string                `json:"id"`
+	Lyrics []string              `json:"lyrics"`
 }
 
-func Run(artistName string, song genius.Song) *[]string {
+func Run(artistName string, song genius.SongWithExtras) []string {
 	lyrics := &[]string{}
 	selector := "div[data-lyrics-container=\"true\"]"
 
@@ -28,10 +33,10 @@ func Run(artistName string, song genius.Song) *[]string {
 	c.Visit(song.URL)
 	c.Wait()
 
-	return lyrics
+	return *lyrics
 }
 
-func Parse(artistName string, song genius.Song, html string) []string {
+func Parse(artistName string, song genius.SongWithExtras, html string) []string {
 	html = strings.ReplaceAll(html, "<br/>", "\n")
 
 	p := bluemonday.NewPolicy()
@@ -65,7 +70,7 @@ func Parse(artistName string, song genius.Song, html string) []string {
 		}
 	}
 
-	slog.Info("Scrape event", "song", song, "lyrics", lyrics)
+	slog.Debug("Scrape event", "song", song)
 	return lyrics
 }
 

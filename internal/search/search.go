@@ -1,3 +1,8 @@
+// Copyright 2024 John Schellinger.
+// Use of this file is governed by the MIT license that can
+// be found in the LICENSE.txt file in the project root.
+
+// Package `search` contains logic to search for an artist and all their affiliations.
 package search
 
 import (
@@ -43,7 +48,7 @@ func Query(artistName string, affiliations []string) ([]int, error) {
 
 	artistIds := maps.Keys(artistMap)
 	if len(artistIds) != 0 {
-		slog.Info("Unique artists", "artists", artistMap)
+		slog.Info(fmt.Sprintf("Found %d unique artists", len(artistMap)), "artists", artistMap)
 		return artistIds, nil
 	} else {
 		return artistIds, errors.New("No search results.")
@@ -74,7 +79,7 @@ func searchWithAffiliation(artistName, affiliation string) map[int]interface{} {
 func searchPrimaryArtist(artistName string) map[int]interface{} {
 	searchResponse := genius.Search(artistName)
 
-	slog.Info(fmt.Sprintf("Searching for \"%s\"...", artistName))
+	slog.Info(fmt.Sprintf("Searching \"%s\"...", artistName))
 	artistIdMap := make(map[int]interface{})
 
 	for _, hit := range searchResponse.Response.Hits {
@@ -84,7 +89,7 @@ func searchPrimaryArtist(artistName string) map[int]interface{} {
 
 		if isInArtistNames || isPrimaryArtist || isFeaturedArtist {
 			artistId := hit.Result.PrimaryArtist.ID
-			slog.Info("Search result", "match", hit.Result.ArtistNames, slog.Int("artistId", artistId))
+			slog.Debug("Search result", "match", hit.Result.ArtistNames, slog.Int("artistId", artistId))
 			artistIdMap[artistId] = hit.Result.PrimaryArtist.Name
 		}
 	}

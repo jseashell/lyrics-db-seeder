@@ -9,7 +9,7 @@ import (
 
 func Test_Parse_AnchorLink(t *testing.T) {
 	artistName := "foo"
-	song := genius.Song{
+	song := genius.SongWithExtras{
 		Album: &genius.Album{
 			Name: "bar",
 		},
@@ -24,7 +24,7 @@ func Test_Parse_AnchorLink(t *testing.T) {
 
 func Test_Parse_LineBreak(t *testing.T) {
 	artistName := "foo"
-	song := genius.Song{
+	song := genius.SongWithExtras{
 		Album: &genius.Album{
 			Name: "bar",
 		},
@@ -41,7 +41,7 @@ func Test_Parse_LineBreak(t *testing.T) {
 func Test_Parse_SkipFeaturePart(t *testing.T) {
 	artistName := "foo"
 	featureArtist := "bar"
-	song := genius.Song{
+	song := genius.SongWithExtras{
 		Album: &genius.Album{
 			Name: "bar",
 		},
