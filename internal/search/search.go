@@ -79,7 +79,6 @@ func searchWithAffiliation(artistName, affiliation string) map[int]interface{} {
 func searchPrimaryArtist(artistName string) map[int]interface{} {
 	searchResponse := genius.Search(artistName)
 
-	slog.Info(fmt.Sprintf("Searching \"%s\"...", artistName))
 	artistIdMap := make(map[int]interface{})
 
 	for _, hit := range searchResponse.Response.Hits {
@@ -89,7 +88,7 @@ func searchPrimaryArtist(artistName string) map[int]interface{} {
 
 		if isInArtistNames || isPrimaryArtist || isFeaturedArtist {
 			artistId := hit.Result.PrimaryArtist.ID
-			slog.Debug("Search result", "match", hit.Result.ArtistNames, slog.Int("artistId", artistId))
+			slog.Info("Match", "artist_names", hit.Result.ArtistNames, slog.Int("artist_id", artistId))
 			artistIdMap[artistId] = hit.Result.PrimaryArtist.Name
 		}
 	}

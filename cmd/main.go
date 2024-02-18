@@ -57,8 +57,8 @@ func main() {
 
 func processArtistId(artistName string, artistId int) {
 	pageNumber := 0
-	songs := make(map[int]scraper.ScrapedSong)
 
+	songs := sync.Map{}
 	var wg sync.WaitGroup
 	for {
 		nextSongs, nextPage := genius.Songs(artistId, artistName, pageNumber)
@@ -67,7 +67,7 @@ func processArtistId(artistName string, artistId int) {
 			defer wg.Done()
 			scrapedSongs := processPage(artistName, toProcess)
 			for _, scrapedSong := range scrapedSongs {
-				songs[scrapedSong.Song.ID] = scrapedSong
+				songs.Store(scrapedSong.Song.ID, scrapedSong)
 			}
 		}(nextSongs)
 
@@ -79,16 +79,18 @@ func processArtistId(artistName string, artistId int) {
 	}
 	wg.Wait()
 
-	slog.Info("Inserting songs", slog.Int("length", len(songs)))
-	for _, song := range songs {
-		db.PutSong(song)
-	}
+	songs.Range(func(key any, value any) bool {
+		db.PutSong(value.(scraper.ScrapedSong))
+		return true
+	})
+
 }
 
 func processPage(artistName string, nextSongs []genius.SongWithExtras) []scraper.ScrapedSong {
 	songs := []scraper.ScrapedSong{}
 
 	var wg sync.WaitGroup
+	mu := &sync.Mutex{}
 	for _, nextSong := range nextSongs {
 		wg.Add(1)
 		go func(artistName string, nextSong genius.SongWithExtras) {
@@ -100,7 +102,10 @@ func processPage(artistName string, nextSongs []genius.SongWithExtras) []scraper
 				ID:     uuid.NewString(), // uuid is for fetching random song from AWS DynamoDB
 				Lyrics: lyrics,
 			}
+
+			mu.Lock()
 			songs = append(songs, scrapedSong)
+			mu.Unlock()
 		}(artistName, nextSong)
 	}
 	wg.Wait()

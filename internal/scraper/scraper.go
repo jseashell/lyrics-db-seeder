@@ -70,7 +70,7 @@ func Parse(artistName string, song genius.SongWithExtras, html string) []string 
 		}
 	}
 
-	slog.Debug("Scrape event", "song", song)
+	slog.Debug("Scrape", "song", song)
 	return lyrics
 }
 

@@ -150,7 +150,7 @@ func Search(searchTerm string) SearchResponse {
 	req.URL.RawQuery = query.Encode()
 
 	client := &http.Client{}
-	slog.Debug("Search", "path", path, "req", req)
+	slog.Debug("Search", "url", req.URL.String())
 	res, err := client.Do(req)
 	if err != nil {
 		slog.Error("Failed request.", "error", err)
@@ -187,7 +187,7 @@ func Songs(artistId int, artistName string, pageNumber int) ([]SongWithExtras, *
 	req.URL.RawQuery = query.Encode()
 
 	client := &http.Client{}
-	slog.Debug("Songs", "path", path, "req", req)
+	slog.Debug("Songs", "url", req.URL.String())
 	res, err := client.Do(req)
 	if err != nil {
 		slog.Error("Reqeust failed.", "url", req.URL.String(), "error", err)
@@ -212,14 +212,14 @@ func Songs(artistId int, artistName string, pageNumber int) ([]SongWithExtras, *
 			song := SongById(songId)
 
 			if song.PrimaryArtist.Name == artistName {
-				slog.Debug("As primary artist", "song", song)
+				slog.Info("As primary artist", "song", song)
 				songs = append(songs, song)
 				return
 			}
 
 			for _, feature := range song.FeaturedArtists {
 				if feature.Name == artistName {
-					slog.Debug("As featured artist", "song", song)
+					slog.Info("As featured artist", "song", song)
 					songs = append(songs, song)
 					break
 				}
@@ -242,7 +242,7 @@ func SongById(id int) SongWithExtras {
 
 	client := &http.Client{}
 	res, err := client.Do(req)
-	slog.Debug("SongById", "req", req)
+	slog.Debug("SongById", "url", req.URL.String())
 	if err != nil {
 		slog.Error("Request failed.", "url", req.URL.String(), "error", err)
 	}
