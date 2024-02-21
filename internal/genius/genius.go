@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -205,23 +206,39 @@ func Songs(artistId int, artistName string, pageNumber int) ([]SongWithExtras, *
 	songs := []SongWithExtras{}
 
 	var wg sync.WaitGroup
+	mu := sync.Mutex{}
 	for _, song := range data.Response.Songs {
 		wg.Add(1)
 		go func(songId int) {
 			defer wg.Done()
 			song := SongById(songId)
 
-			if song.PrimaryArtist.Name == artistName {
+			if strings.Contains(song.PrimaryArtist.Name, artistName) {
 				slog.Info("As primary artist", "song", song)
-				songs = append(songs, song)
-				return
-			}
 
-			for _, feature := range song.FeaturedArtists {
-				if feature.Name == artistName {
-					slog.Info("As featured artist", "song", song)
-					songs = append(songs, song)
-					break
+				mu.Lock()
+				songs = append(songs, song)
+				mu.Unlock()
+
+				return
+			} else {
+
+				foundFeature := false
+				for _, feature := range song.FeaturedArtists {
+					if strings.Contains(feature.Name, artistName) {
+						slog.Info("As featured artist", "song", song)
+
+						mu.Lock()
+						songs = append(songs, song)
+						mu.Unlock()
+
+						foundFeature = true
+						break
+					}
+				}
+
+				if !foundFeature {
+					slog.Debug("Not a contributor", "song", song)
 				}
 			}
 		}(song.ID)
@@ -242,7 +259,6 @@ func SongById(id int) SongWithExtras {
 
 	client := &http.Client{}
 	res, err := client.Do(req)
-	slog.Debug("SongById", "url", req.URL.String())
 	if err != nil {
 		slog.Error("Request failed.", "url", req.URL.String(), "error", err)
 	}
@@ -255,6 +271,8 @@ func SongById(id int) SongWithExtras {
 
 	var data SongByIdResponse
 	json.Unmarshal(body, &data)
+
+	slog.Debug("SongById", "url", req.URL.String(), "res", data.Response.Song)
 
 	return data.Response.Song
 }
