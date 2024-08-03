@@ -97,15 +97,18 @@ func processPage(artistName string, nextSongs []genius.SongWithExtras) []scraper
 			defer wg.Done()
 
 			lyrics := scraper.Run(artistName, nextSong)
-			scrapedSong := scraper.ScrapedSong{
-				Song:   nextSong,
-				ID:     uuid.NewString(), // uuid is for fetching random song from AWS DynamoDB
-				Lyrics: lyrics,
+			if len(lyrics) > 0 {
+				scrapedSong := scraper.ScrapedSong{
+					Song:   nextSong,
+					ID:     uuid.NewString(), // uuid is for fetching random song from AWS DynamoDB
+					Lyrics: lyrics,
+				}
+
+				mu.Lock()
+				songs = append(songs, scrapedSong)
+				mu.Unlock()
 			}
 
-			mu.Lock()
-			songs = append(songs, scrapedSong)
-			mu.Unlock()
 		}(artistName, nextSong)
 	}
 	wg.Wait()
