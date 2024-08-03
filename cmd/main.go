@@ -15,11 +15,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	"github.com/jseashell/genius-lyrics-seed-service/internal/db"
-	"github.com/jseashell/genius-lyrics-seed-service/internal/genius"
-	"github.com/jseashell/genius-lyrics-seed-service/internal/logger"
-	"github.com/jseashell/genius-lyrics-seed-service/internal/scraper"
-	"github.com/jseashell/genius-lyrics-seed-service/internal/search"
+	"github.com/jseashell/lyrics-db-seeder/internal/db"
+	"github.com/jseashell/lyrics-db-seeder/internal/genius"
+	"github.com/jseashell/lyrics-db-seeder/internal/logger"
+	"github.com/jseashell/lyrics-db-seeder/internal/scraper"
+	"github.com/jseashell/lyrics-db-seeder/internal/search"
 )
 
 func main() {

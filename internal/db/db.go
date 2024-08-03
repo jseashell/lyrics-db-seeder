@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/jseashell/genius-lyrics-seed-service/internal/scraper"
+	"github.com/jseashell/lyrics-db-seeder/internal/scraper"
 )
 
 func PutSong(song scraper.ScrapedSong) {

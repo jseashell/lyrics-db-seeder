@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly"
-	"github.com/jseashell/genius-lyrics-seed-service/internal/genius"
+	"github.com/jseashell/lyrics-db-seeder/internal/genius"
 	"github.com/microcosm-cc/bluemonday"
 )
 

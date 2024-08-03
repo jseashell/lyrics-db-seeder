@@ -11,7 +11,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/jseashell/genius-lyrics-seed-service/internal/genius"
+	"github.com/jseashell/lyrics-db-seeder/internal/genius"
 	"golang.org/x/exp/maps"
 )
 

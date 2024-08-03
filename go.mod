@@ -1,4 +1,4 @@
-module github.com/jseashell/genius-lyrics-seed-service
+module github.com/jseashell/lyrics-db-seeder
 
 go 1.21.4
 

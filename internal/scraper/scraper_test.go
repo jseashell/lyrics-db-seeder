@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jseashell/genius-lyrics-seed-service/internal/genius"
+	"github.com/jseashell/lyrics-db-seeder/internal/genius"
 )
 
 func Test_Parse_AnchorLink(t *testing.T) {
