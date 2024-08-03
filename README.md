@@ -1,6 +1,6 @@
-# AWS Genius Lyrics
+# Lyrics Database Seeder
 
-Golang app that seeds AWS DynamoDB with songs and lyrics for a single artist.
+Golang app that seeds AWS DynamoDB with lyrics (categorized by song) for a single artist.
 
 <p style="display: flex; align-items: center;">
   <img src="./docs/@images/genius.png" width="400"/>
@@ -19,8 +19,8 @@ Golang app that seeds AWS DynamoDB with songs and lyrics for a single artist.
 1. Clone the respository
 
     ```sh
-    git clone git@github.com:jseashell/genius-lyrics-seed-service
-    cd genius-lyrics-seed-service
+    git clone git@github.com:jseashell/lyrics-db-seeder.git
+    cd lyrics-db-seeder
     ```
 
 1. Create an `.env` file and add the necessary values.
@@ -61,6 +61,10 @@ Golang app that seeds AWS DynamoDB with songs and lyrics for a single artist.
 ├── Makefile
 └── README.md
 ```
+
+## AWS
+
+Performance will vary depending on your DynamoDB read/write capacity settings and your network connection.
 
 ## 3rd party libraries
 
