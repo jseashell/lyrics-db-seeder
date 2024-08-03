@@ -9,7 +9,7 @@ clean:
 gosumgen: clean
 	go mod tidy
 
-run: clean build
+go: clean build
 	go run cmd/main.go
 
 test:
