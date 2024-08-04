@@ -29,9 +29,10 @@ Golang app that seeds AWS DynamoDB with lyrics (categorized by song) for a singl
     cp .env.example .env
     ```
 
-    - `GENIUS_ACCESS_TOKEN`: Visit [https://docs.genius.com/](https://docs.genius.com/).
+    - `GENIUS_ACCESS_TOKEN`: Visit [https://docs.genius.com/](https://docs.genius.com/). Sign up for a developer account, create a new API client, and "Generate Token" for that client (do not use the client ID/secret).
     - `GENIUS_PRIMARY_ARTIST`: Name of the artist to collect.
-    - `GENIUS_AFFILIATIONS`: List of affiliations to include in collections. Affiliations help the search engine, but searching will yield both explicit and implicit affiliations
+    - `GENIUS_INCLUDE_FEATURED`: Indicates whether to scrape lyrics when GENIUS_PRIMARY_ARTIST is listed as a featured artist. This can greatly increase the amount of data to be processed.
+    - `GENIUS_AFFILIATIONS`: List of affiliations to include in collections. Affiliations help the search engine, but searching will yield both explicit and implicit affiliations, or empty string. This can greatly increase the amount of data to be processed.
     - `LOG_LEVEL`: Log level. Supports "DEBUG", "INFO", "WARN", or "ERROR".
     - `AWS_DYNAMODB_SONGS_TABLE_NAME`: Name of the table in which to save songs.
     - `SKIP_DB`: Skips database operations. Typically used for debugging and verification before incurring AWS costs.

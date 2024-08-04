@@ -9,6 +9,7 @@ package main
 import (
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -30,12 +31,13 @@ func main() {
 		panic(err)
 	}
 	artistName := os.Getenv("GENIUS_PRIMARY_ARTIST")
+	includeFeatured := getenvBool("GENIUS_INCLUDE_FEATURED")
 	affiliations := strings.Split(os.Getenv("GENIUS_AFFILIATIONS"), ",")
 
 	logger := logger.New()
 	slog.SetDefault(logger)
 
-	artistIds, err := search.Query(artistName, affiliations)
+	artistIds, err := search.Query(artistName, affiliations, includeFeatured)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +47,7 @@ func main() {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			processArtistId(artistName, id)
+			processArtistId(artistName, id, includeFeatured)
 		}(id)
 	}
 	wg.Wait()
@@ -55,13 +57,22 @@ func main() {
 	slog.Info("Seed complete", slog.Float64("seconds", elapsed.Seconds()))
 }
 
-func processArtistId(artistName string, artistId int) {
+func getenvBool(key string) bool {
+	s := os.Getenv(key)
+	v, err := strconv.ParseBool(s)
+	if err != nil {
+		return false
+	}
+	return v
+}
+
+func processArtistId(artistName string, artistId int, includeFeatured bool) {
 	pageNumber := 0
 
 	songs := sync.Map{}
 	var wg sync.WaitGroup
 	for {
-		nextSongs, nextPage := genius.Songs(artistId, artistName, pageNumber)
+		nextSongs, nextPage := genius.Songs(artistId, artistName, pageNumber, includeFeatured)
 		wg.Add(1)
 		go func(toProcess []genius.SongWithExtras) {
 			defer wg.Done()

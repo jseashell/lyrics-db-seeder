@@ -171,7 +171,7 @@ func Search(searchTerm string) SearchResponse {
 // Fetches a page of songs for a given artist via GET request to the Genius.com API.
 // Subsequently loops over each song to fetch its metadata via go routines. Only songs
 // that have the given artist present as a primary or featured artist are returned.
-func Songs(artistId int, artistName string, pageNumber int) ([]SongWithExtras, *int) {
+func Songs(artistId int, artistName string, pageNumber int, includeFeatured bool) ([]SongWithExtras, *int) {
 	path := fmt.Sprintf("/artists/%s/songs", strconv.Itoa(artistId))
 	url := fmt.Sprintf("https://api.genius.com%s", path)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -221,8 +221,7 @@ func Songs(artistId int, artistName string, pageNumber int) ([]SongWithExtras, *
 				mu.Unlock()
 
 				return
-			} else {
-
+			} else if includeFeatured {
 				foundFeature := false
 				for _, feature := range song.FeaturedArtists {
 					if strings.Contains(feature.Name, artistName) {

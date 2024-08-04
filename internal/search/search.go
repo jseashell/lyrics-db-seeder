@@ -35,14 +35,14 @@ type SearchResponseArtist struct {
 	Name string `json:"name"`
 }
 
-func Query(artistName string, affiliations []string) ([]int, error) {
+func Query(artistName string, affiliations []string, includeFeatured bool) ([]int, error) {
 	artistMap := make(map[int]interface{})
 
 	primaryArtistMap := search(artistName, artistName)
 	maps.Copy(artistMap, primaryArtistMap)
 
 	for _, affiliation := range affiliations {
-		affiliationMap := searchWithAffiliation(artistName, affiliation)
+		affiliationMap := searchWithAffiliation(artistName, affiliation, includeFeatured)
 		maps.Copy(artistMap, affiliationMap)
 	}
 
@@ -56,25 +56,34 @@ func Query(artistName string, affiliations []string) ([]int, error) {
 }
 
 // Runs a [search] for an affiliated contributor, e.g. "Other Artist (Ft. My Artist)"
-func searchWithAffiliation(artistName, affiliation string) map[int]interface{} {
-	affiliationMap := search(artistName, affiliation)
-	artistAndAffiliationMap := search(artistName, fmt.Sprintf("%s and %s", artistName, affiliation))
-	artistAndSymAffiliationMap := search(artistName, fmt.Sprintf("%s & %s", artistName, affiliation))
-	affiliationAndArtistMap := search(artistName, fmt.Sprintf("%s and %s", affiliation, artistName))
-	affiliationAndSymArtistMap := search(artistName, fmt.Sprintf("%s & %s", affiliation, artistName))
-	ftMap := search(artistName, fmt.Sprintf("%s (Ft. %s)", affiliation, artistName))
-	ft2Map := search(artistName, fmt.Sprintf("%s (ft. %s)", affiliation, artistName))
-	featMap := search(artistName, fmt.Sprintf("%s (feat. %s)", affiliation, artistName))
-
+func searchWithAffiliation(artistName, affiliation string, includeFeatured bool) map[int]interface{} {
 	ret := make(map[int]interface{})
+
+	affiliationMap := search(artistName, affiliation)
 	maps.Copy(ret, affiliationMap)
+
+	artistAndAffiliationMap := search(artistName, fmt.Sprintf("%s and %s", artistName, affiliation))
 	maps.Copy(ret, artistAndAffiliationMap)
+
+	artistAndSymAffiliationMap := search(artistName, fmt.Sprintf("%s & %s", artistName, affiliation))
 	maps.Copy(ret, artistAndSymAffiliationMap)
+
+	affiliationAndArtistMap := search(artistName, fmt.Sprintf("%s and %s", affiliation, artistName))
 	maps.Copy(ret, affiliationAndArtistMap)
+
+	affiliationAndSymArtistMap := search(artistName, fmt.Sprintf("%s & %s", affiliation, artistName))
 	maps.Copy(ret, affiliationAndSymArtistMap)
-	maps.Copy(ret, ftMap)
-	maps.Copy(ret, ft2Map)
-	maps.Copy(ret, featMap)
+
+	if includeFeatured {
+		ftMap := search(artistName, fmt.Sprintf("%s (Ft. %s)", affiliation, artistName))
+		maps.Copy(ret, ftMap)
+
+		ft2Map := search(artistName, fmt.Sprintf("%s (ft. %s)", affiliation, artistName))
+		maps.Copy(ret, ft2Map)
+
+		featMap := search(artistName, fmt.Sprintf("%s (feat. %s)", affiliation, artistName))
+		maps.Copy(ret, featMap)
+	}
 
 	return ret
 }
