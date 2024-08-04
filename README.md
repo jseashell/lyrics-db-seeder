@@ -38,8 +38,13 @@ Golang app that seeds AWS DynamoDB with lyrics (categorized by song) for a singl
 
 1. Run the app
 
-    ```go
-    make run
+    
+    ```sh
+    # clean, build
+    make
+
+    # clean, build, run
+    make go
     ```
 
 ## Project Structure

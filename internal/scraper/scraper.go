@@ -75,5 +75,5 @@ func Parse(artistName string, song genius.SongWithExtras, html string) []string 
 }
 
 func isMetaLine(line string) bool {
-	return strings.Contains(line, "[Intro") || strings.Contains(line, "[Verse") || strings.Contains(line, "[Pre-Chorus") || strings.Contains(line, "[Chorus") || strings.Contains(line, "[Hook") || strings.Contains(line, "[Bridge") || strings.Contains(line, "[Outro")
+	return strings.Contains(line, "[Intro") || strings.Contains(line, "[Verse") || strings.Contains(line, "[Pre-Chorus") || strings.Contains(line, "[Chorus") || strings.Contains(line, "[Hook") || strings.Contains(line, "[Bridge") || strings.Contains(line, "[Outro") || strings.Contains(line, "[Break")
 }
