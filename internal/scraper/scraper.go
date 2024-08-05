@@ -15,8 +15,9 @@ import (
 )
 
 type ScrapedSong struct {
-	Song   genius.SongWithExtras `json:"song"`
 	ID     string                `json:"id"`
+	Song   genius.SongWithExtras `json:"song"`
+	Album  genius.Album          `json:"album"`
 	Lyrics []string              `json:"lyrics"`
 }
 
