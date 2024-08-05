@@ -30,14 +30,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	artistName := os.Getenv("GENIUS_PRIMARY_ARTIST")
-	includeFeatured := getenvBool("GENIUS_INCLUDE_FEATURED")
-	affiliations := strings.Split(os.Getenv("GENIUS_AFFILIATIONS"), ",")
+	artistName := os.Getenv("ARTIST")
+	includeFeatured := getenvBool("INCLUDE_FEATURED")
+	includeAnded := getenvBool("INCLUDE_ANDED")
+	affiliations := strings.Split(os.Getenv("AFFILIATIONS"), ",")
 
 	logger := logger.New()
 	slog.SetDefault(logger)
 
-	artistIds, err := search.Query(artistName, affiliations, includeFeatured)
+	artistIds, err := search.Query(artistName, affiliations, includeFeatured, includeAnded)
 	if err != nil {
 		panic(err)
 	}

@@ -66,6 +66,7 @@ func Parse(artistName string, song genius.SongWithExtras, html string) []string 
 			trimmed = strings.ReplaceAll(trimmed, "’", "'")
 			trimmed = strings.ReplaceAll(trimmed, "&#39;", "'")
 			trimmed = strings.ReplaceAll(trimmed, "&#34;", "\"")
+			trimmed = strings.ReplaceAll(trimmed, "&amp;", "&")
 			lyrics = append(lyrics, trimmed)
 		}
 	}
